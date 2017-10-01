@@ -1,1 +1,4 @@
-Neural Nets with weight training with Genetic Search
+EvoNet
+======
+
+Neural Nets training with Genetic Search demonstrated on the XOR problem.
