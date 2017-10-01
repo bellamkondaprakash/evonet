@@ -71,6 +71,7 @@ def evolve(epochs, inp, out, p_mutate, p_cross, wt_shapes, fn, cutoff=1):
         fitnesses = np.array([getfitness(i, inp, out, fn) for i in pop])
         log.append(fitnesses)
         m = fitnesses.max()
+        print(m)
         if m == cutoff:
             break
         npop = [cross(pop[roulette(fitnesses)],
@@ -97,4 +98,4 @@ inp = np.array([[0, 0],
                 [1, 1]]*reps)
 out = np.array([0, 1, 1, 0]*reps)
 
-pop, f, log = evolve(1000, inp, out, p_mutate, p_cross, wts, sigmoid)
+evolve(1000, inp, out, p_mutate, p_cross, wts, sigmoid)
