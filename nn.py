@@ -1,27 +1,27 @@
-import numpy as np
-from sklearn.metrics import roc_auc_score
+import numpy as np  # For matrix calculations
+from sklearn.metrics import roc_auc_score  # For measuring ROC
 
 
-def sigmoid(x):
+def sigmoid(x):  # Activation function used
     return 1 / (np.exp(-x) + 1)
 
 
 def roulette(fits):
+    """
+    Given a list of fitnesses, selects an item from that list
+    with probability proportional to the fitnesses given.
+    """
     f = fits - fits.min()  # We make sure lowest fitness is 0
     mark = np.random.random() * f.sum()  # mark some spot
-    total = 0
-    # start adding the fitnesses until we cross the mark
-    for index, i in enumerate(f):
-        total += i
-        if total >= mark:
-            return index
-    raise Exception('This is not supposed to happen')
+    tip_over = np.cumsum(f) >= mark
+    index = np.argmax(tip_over)
+    return index
 
 
-def forward(i, wts, fn):
+def forward(i, layers, fn):
     "forward calculation of the net"
-    for w in wts:
-        i = fn(i @ w)
+    for w in layers:
+        i = fn(i @ w)  # Python 3 has @ as a matrix multiplication op
     return i
 
 
@@ -43,8 +43,11 @@ def getfitness(wts,  # weights of the layers
 
 def mutate(x, p_mutate):
     "Mutate a solution"
+    # What all needs mutation
     mask = (np.random.random(x.shape) < p_mutate).astype(int)
+    # The actual mutation
     mutation = (np.random.random(x.shape) * 2 - 1)
+    # Perform the mutation
     x = (mutation * mask) + x
     return x
 
@@ -67,11 +70,11 @@ def evolve(epochs, inp, out, p_mutate, p_cross, wt_shapes, fn, cutoff=1):
     pop = [[np.random.random(i) for i in wt_shapes]
            for _ in range(popsize)]
     log = []
-    for _ in range(epochs):
+    for epoch in range(epochs):
         fitnesses = np.array([getfitness(i, inp, out, fn) for i in pop])
         log.append(fitnesses)
         m = fitnesses.max()
-        print(m)
+        print(epoch, m)
         if m == cutoff:
             break
         npop = [cross(pop[roulette(fitnesses)],
@@ -81,14 +84,20 @@ def evolve(epochs, inp, out, p_mutate, p_cross, wt_shapes, fn, cutoff=1):
     return pop, fitnesses, log
 
 
+# ----------------------------------------------------------------
 # Configuration
+# ----------------------------------------------------------------
 reps = 100  # how many repetitions of the dataset?
 hd = 2  # hidden dim
 popsize = 100  # population size
 p_cross = 0.8  # probability of crossover
 p_mutate = 0.01  # probability of mutation
 # The shapes of the weights in the FF network
-wts = [(2, hd), (hd, hd), (hd, 1)]
+wts = [
+       (2, hd),  # input layer of network
+       (hd, hd),  # hidden layer of network
+       (hd, 1)  # output layer of network
+       ]
 
 
 # Dataset
