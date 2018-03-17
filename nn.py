@@ -20,6 +20,8 @@ def roulette(fits):
 
 def forward(i, layers, fn):
     "forward calculation of the net"
+    # We feed the output of one layer as input
+    # to the next layer
     for w in layers:
         i = fn(i @ w)  # Python 3 has @ as a matrix multiplication op
     return i
@@ -27,6 +29,8 @@ def forward(i, layers, fn):
 
 def fitness_score(exp, got):
     "Calculate the fitness score "
+    # This is a simple calculation.
+    # Needs to return a single number
     return roc_auc_score(exp, got)
 
 
@@ -35,7 +39,7 @@ def getfitness(wts,  # weights of the layers
                oe,  # outputs expected
                fn):  # activation function
     "Get the fitness of a solution"
-    w1, w2, w3 = wts
+    w1, w2, w3 = wts  # We know it's a 3 layer network
     o = forward(i, [w1, w2, w3], fn)
     e = fitness_score(oe, o)
     return e
@@ -43,7 +47,7 @@ def getfitness(wts,  # weights of the layers
 
 def mutate(x, p_mutate):
     "Mutate a solution"
-    # What all needs mutation
+    # Only some parts of the network mutate
     mask = (np.random.random(x.shape) < p_mutate).astype(int)
     # The actual mutation
     mutation = (np.random.random(x.shape) * 2 - 1)
@@ -58,8 +62,10 @@ def cross(c1, c2, p_cross, p_mutate):
     for a, b in zip(c1, c2):
         c = a
         if np.random.random() < p_cross:
+            # Randomly swap weights between the two
             mask = (np.random.random(a.shape) < 0.5).astype(int)
             x = (a * mask) + (b * (np.abs(1-mask)))
+            # Mudate the resultant network
             c = mutate(x, p_mutate)
         n.append(c)
     return n
@@ -67,6 +73,7 @@ def cross(c1, c2, p_cross, p_mutate):
 
 def evolve(epochs, inp, out, p_mutate, p_cross, wt_shapes, fn, cutoff=1):
     "Evolve a population until an acceptable solution is found"
+    # From the shape of weights, we create random weights for the networks
     pop = [[np.random.random(i) for i in wt_shapes]
            for _ in range(popsize)]
     log = []
@@ -75,8 +82,14 @@ def evolve(epochs, inp, out, p_mutate, p_cross, wt_shapes, fn, cutoff=1):
         log.append(fitnesses)
         m = fitnesses.max()
         print(epoch, m)
-        if m == cutoff:
+        if m >= cutoff:
+            # Our network is perfect.
             break
+        # A new population needs to be created
+        # We select two parents by roulette selection
+        # from the current population and breed them
+        # by crossing them
+        # We choose to maintain population size
         npop = [cross(pop[roulette(fitnesses)],
                       pop[roulette(fitnesses)],
                       p_cross, p_mutate) for _ in pop]
